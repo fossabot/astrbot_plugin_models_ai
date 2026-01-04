@@ -75,6 +75,49 @@ class ImageManager:
         filename = f"{int(time.time())}_{os.urandom(4).hex()}{extension}"
         return str(image_dir / filename)
 
+    @staticmethod
+    def _get_extension_from_url_or_content_type(
+        url: str, content_type: Optional[str] = None
+    ) -> str:
+        """从 URL 或 Content-Type 获取图片文件扩展名
+
+        Args:
+            url: 图片 URL
+            content_type: HTTP 响应头的 Content-Type
+
+        Returns:
+            文件扩展名（包含点号，如 ".jpg"）
+        """
+        # 首先尝试从 Content-Type 获取
+        if content_type:
+            content_type_lower = content_type.lower()
+            if "image/jpeg" in content_type_lower or "image/jpg" in content_type_lower:
+                return ".jpg"
+            if "image/png" in content_type_lower:
+                return ".png"
+            if "image/webp" in content_type_lower:
+                return ".webp"
+            if "image/gif" in content_type_lower:
+                return ".gif"
+            if "image/bmp" in content_type_lower:
+                return ".bmp"
+
+        # 其次尝试从 URL 获取
+        url_lower = url.lower()
+        if url_lower.endswith(".png"):
+            return ".png"
+        if url_lower.endswith(".webp"):
+            return ".webp"
+        if url_lower.endswith(".gif"):
+            return ".gif"
+        if url_lower.endswith(".bmp"):
+            return ".bmp"
+        if url_lower.endswith(".jpg") or url_lower.endswith(".jpeg"):
+            return ".jpg"
+
+        # 默认返回 .jpg
+        return ".jpg"
+
     async def download_image(self, url: str, session: aiohttp.ClientSession) -> str:
         """下载图片并异步保存到文件
 
@@ -97,10 +140,14 @@ class ImageManager:
             if resp.status != 200:
                 raise RuntimeError(f"下载图片失败: HTTP {resp.status}")
             data = await resp.read()
+            content_type = resp.headers.get("Content-Type")
 
-        self.debug_log(f"图片下载完成: size={len(data)} bytes")
+        self.debug_log(f"图片下载完成: size={len(data)} bytes, content_type={content_type}")
 
-        filepath = self.get_save_path()
+        # 根据内容类型或 URL 确定文件扩展名
+        extension = self._get_extension_from_url_or_content_type(url, content_type)
+        filepath = self.get_save_path(extension)
+
         async with aiofiles.open(filepath, "wb") as f:
             await f.write(data)
 
@@ -113,7 +160,7 @@ class ImageManager:
         将 Base64 编码的图片数据解码并保存到本地文件。
 
         Args:
-            b64_data: Base64 编码的图片数据
+            b64_data: Base64 编码的图片数据，可能包含 data URI 前缀
 
         Returns:
             保存的图片文件路径（绝对路径）
@@ -124,9 +171,37 @@ class ImageManager:
         """
         self.debug_log(f"开始保存 Base64 图片: data_size={len(b64_data)}")
 
-        filepath = self.get_save_path()
+        # 检查是否包含 data URI 前缀
+        extension = ".jpg"  # 默认扩展名
+        if b64_data.startswith("data:image/"):
+            # 解析 data URI 前缀，例如 "data:image/png;base64,"
+            try:
+                header_end = b64_data.find(";base64,")
+                if header_end != -1:
+                    mime_type = b64_data[5:header_end]  # 提取 "image/png"
+                    mime_type_lower = mime_type.lower()
+                    if mime_type_lower == "image/jpeg" or mime_type_lower == "image/jpg":
+                        extension = ".jpg"
+                    elif mime_type_lower == "image/png":
+                        extension = ".png"
+                    elif mime_type_lower == "image/webp":
+                        extension = ".webp"
+                    elif mime_type_lower == "image/gif":
+                        extension = ".gif"
+                    elif mime_type_lower == "image/bmp":
+                        extension = ".bmp"
+                    self.debug_log(f"从 Base64 前缀检测到格式: {mime_type}")
+            except Exception as e:
+                self.debug_log(f"解析 Base64 前缀失败: {e}，使用默认格式")
+
+        # 解码 Base64 数据
+        # 如果包含 data URI 前缀，需要先移除
+        if "," in b64_data:
+            b64_data = b64_data.split(",", 1)[1]
+
         image_bytes = base64.b64decode(b64_data)
 
+        filepath = self.get_save_path(extension)
         async with aiofiles.open(filepath, "wb") as f:
             await f.write(image_bytes)
 
