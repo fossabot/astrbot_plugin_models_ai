@@ -7,6 +7,7 @@ import asyncio
 from typing import Any
 
 from astrbot.api import logger
+from openai import AuthenticationError, RateLimitError, APIError
 
 from .client_manager import ClientManager
 from .config import CLEANUP_INTERVAL
@@ -124,16 +125,20 @@ class GiteeAIClient:
         try:
             response = await client.images.generate(**kwargs)  # type: ignore
             self.debug_log("API 响应接收成功")
-        except Exception as e:
-            error_msg = str(e)
-            self.debug_log(f"API 调用失败: {error_msg}")
-            if "401" in error_msg:
-                raise RuntimeError("API Key 无效或已过期，请检查配置。") from e
-            if "429" in error_msg:
-                raise RuntimeError("API 调用次数超限或并发过高，请稍后再试。") from e
-            if "500" in error_msg:
+        except AuthenticationError as e:
+            self.debug_log(f"API 认证失败: {e}")
+            raise RuntimeError("API Key 无效或已过期，请检查配置。") from e
+        except RateLimitError as e:
+            self.debug_log(f"API 速率限制: {e}")
+            raise RuntimeError("API 调用次数超限或并发过高，请稍后再试。") from e
+        except APIError as e:
+            self.debug_log(f"API 错误: {e}")
+            if e.status_code == 500:
                 raise RuntimeError("Gitee AI 服务器内部错误，请稍后再试。") from e
-            raise RuntimeError(f"API调用失败: {error_msg}") from e
+            raise RuntimeError(f"API调用失败: {e}") from e
+        except Exception as e:
+            self.debug_log(f"未知错误: {e}")
+            raise RuntimeError(f"API调用失败: {e}") from e
 
         if not response.data:  # type: ignore
             raise RuntimeError("生成图片失败：未返回数据")

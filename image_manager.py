@@ -16,7 +16,7 @@ import aiohttp
 from astrbot.api import logger
 from astrbot.api.star import StarTools
 
-from .config import MAX_CACHED_IMAGES
+from .config import MAX_CACHED_IMAGES, PLUGIN_NAME
 
 
 class ImageManager:
@@ -54,7 +54,7 @@ class ImageManager:
             目录在首次访问时创建，使用 AstrBot 的数据目录。
         """
         if self._image_dir is None:
-            base_dir = StarTools.get_data_dir("astrbot_plugin_models_ai")
+            base_dir = StarTools.get_data_dir(PLUGIN_NAME)
             self._image_dir = base_dir / "images"
             self._image_dir.mkdir(exist_ok=True)
             self.debug_log(f"初始化图片目录: {self._image_dir}")

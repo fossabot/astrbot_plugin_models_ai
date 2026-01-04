@@ -9,7 +9,7 @@ from typing import Any, AsyncGenerator
 from astrbot.api import logger
 from astrbot.api.event import AstrMessageEvent, filter as filter_cmd
 from astrbot.api.message_components import Image, Plain
-from astrbot.api.star import Context, Star, register
+from astrbot.api.star import Context, Star
 
 from .api_client import GiteeAIClient
 from .config import (
@@ -24,13 +24,6 @@ from .config import (
 from .rate_limiter import RateLimiter
 
 
-@register(
-    "astrbot_plugin_models_ai",
-    "曲筱绡",
-    "接入 Gitee AI 图像生成模型。可以使用来自多家模型服务提供商的模型生成图片，让bot自拍给你看。",
-    "0.0.1",
-    "https://github.com/xiaomizhoubaobei/astrbot_plugin_models_ai"
-)
 class GiteeAIImage(Star):
     """Gitee AI 图像生成插件
 

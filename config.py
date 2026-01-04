@@ -6,6 +6,9 @@
 from typing import Any
 
 
+# 插件配置
+PLUGIN_NAME = "astrbot_plugin_models_ai"
+
 # 配置常量
 DEFAULT_BASE_URL = "https://ai.gitee.com/v1"
 DEFAULT_MODEL = "z-image-turbo"
