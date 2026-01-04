@@ -1,13 +1,13 @@
-# AstrBot Gitee AI 图像生成插件 （有免费额度）
+# AstrBot AI 图像生成插件 （有免费额度）
 
-> **当前版本**: v1.2
+> **当前版本**: v0.0.1
 
 本插件为 AstrBot 接入 Gitee AI 的图像生成能力，支持通过自然语言或指令调用，支持多 Key 轮询。
 
 ## 功能特性
 
 - 支持通过 LLM 自然语言调用生成图片
-- 支持通过指令 `/aiimg` 生成图片
+- 支持通过指令 `/ai` 生成图片
 - 支持多种图片比例和分辨率
 - 支持自定义模型
 - 支持多 API Key 轮询调用
@@ -35,9 +35,9 @@
 ## Gitee AI API Key获取方法：
 1.访问https://ai.gitee.com/serverless-api?model=z-image-turbo
 
-2.<img width="2241" height="1280" alt="PixPin_2025-12-05_16-56-27" src="https://github.com/user-attachments/assets/77f9a713-e7ac-4b02-8603-4afc25991841" />
+2.<img width="2241" height="1280" alt="PixPin_2025-12-05_16-56-27" src="./images/77f9a713-e7ac-4b02-8603-4afc25991841.png" />
 
-3.免费额度<img width="240" height="63" alt="PixPin_2025-12-05_16-56-49" src="https://github.com/user-attachments/assets/6efde7c4-24c6-456a-8108-e78d7613f4fb" />
+3.免费额度<img width="240" height="63" alt="PixPin_2025-12-05_16-56-49" src="./images/6efde7c4-24c6-456a-8108-e78d7613f4fb.png" />
 
 4.可以涩涩，警惕违规被举报
 
@@ -47,15 +47,15 @@
 
 > ⚠️ **注意**: 仅支持以下尺寸，使用其他尺寸会报错
 
-| 比例 | 可用尺寸 |
-|------|----------|
-| 1:1 | 256×256, 512×512, 1024×1024, 2048×2048 |
-| 4:3 | 1152×896, 2048×1536 |
-| 3:4 | 768×1024, 1536×2048 |
-| 3:2 | 2048×1360 |
-| 2:3 | 1360×2048 |
-| 16:9 | 1024×576, 2048×1152 |
-| 9:16 | 576×1024, 1152×2048 |
+| 比例   | 可用尺寸                                   |
+|------|----------------------------------------|
+| 1:1  | 256×256, 512×512, 1024×1024, 2048×2048 |
+| 4:3  | 1152×896, 2048×1536                    |
+| 3:4  | 768×1024, 1536×2048                    |
+| 3:2  | 2048×1360                              |
+| 2:3  | 1360×2048                              |
+| 16:9 | 1024×576, 2048×1152                    |
+| 9:16 | 576×1024, 1152×2048                    |
 
 ## 使用方法
 
@@ -81,43 +81,14 @@
 
 - 请确保您的 Gitee AI 账号有足够的额度。
 
-- 生成的图片会临时保存在 `data/plugins/astrbot_plugin_gitee_aiimg/images` 目录下
+- 生成的图片会临时保存在 `data/plugins/astrbot_plugin_models_ai/images` 目录下
 - 插件会自动清理旧图片，保留最近 50 张，无需手动管理
-- `/aiimg` 命令和 LLM 调用均有 10 秒防抖机制，避免重复请求
-
-## 更新日志
-
-### v1.2 (2024-12)
-
-**🚀 性能优化**
-- 100% 异步 I/O，不再阻塞事件循环
-- HTTP 客户端复用，减少连接开销
-- 自动清理旧图片，保留最近 50 张
-
-**🐛 Bug 修复**
-- 修复内存泄漏问题
-- 统一防抖机制，`/aiimg` 命令现也有 10 秒防抖
-
-**✨ 新功能**
-- 新增 `negative_prompt` 配置项，可自定义负面提示词
-
-### v1.1
-
-- 初始版本
-- 支持 LLM 工具调用和 `/aiimg` 命令
-- 支持多种图片比例
-- 支持多 Key 轮询
+- `/ai` 命令和 LLM 调用均有 10 秒防抖机制，避免重复请求
 
 ## 出图展示区
 
-<img width="1152" height="2048" alt="29889b7b184984fac81c33574233a3a9_720" src="https://github.com/user-attachments/assets/c2390320-6d55-4db4-b3ad-0dde7b447c87" />
+<img width="1152" height="2048" alt="29889b7b184984fac81c33574233a3a9_720" src="./images/c2390320-6d55-4db4-b3ad-0dde7b447c87.png" />
 
-<img width="1152" height="2048" alt="60393b1ea20d432822c21a61ba48d946" src="https://github.com/user-attachments/assets/3d8195e5-5d89-4a12-806e-8a81e348a96c" />
+<img width="1152" height="2048" alt="60393b1ea20d432822c21a61ba48d946" src="./images/3d8195e5-5d89-4a12-806e-8a81e348a96c.png" />
 
-<img width="1152" height="2048" alt="3e5ee8d438fa797730127e57b9720454_720" src="https://github.com/user-attachments/assets/c270ae7f-25f6-4d96-bbed-0299c9e61877" />
-
-
-
-
-
-
+<img width="1152" height="2048" alt="3e5ee8d438fa797730127e57b9720454_720" src="./images/c270ae7f-25f6-4d96-bbed-0299c9e61877.png" />
