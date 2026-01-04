@@ -144,27 +144,32 @@ class ImageManager:
         """
         try:
             image_dir = self._get_image_dir()
-            # 收集所有支持的图片格式
-            images: list[Path] = []
-            for ext in ("*.jpg", "*.png", "*.webp"):
-                images.extend(image_dir.glob(ext))
+            # 支持的图片扩展名
+            supported_exts = {".jpg", ".jpeg", ".png", ".webp"}
 
-            self.debug_log(f"清理旧图片: total={len(images)}, max={MAX_CACHED_IMAGES}")
+            # 使用 os.scandir 一次性获取文件信息和元数据，减少系统调用
+            images_with_mtime: list[tuple[str, float]] = []
+            with os.scandir(image_dir) as entries:
+                for entry in entries:
+                    if entry.is_file() and entry.name.lower().endswith(tuple(supported_exts)):
+                        images_with_mtime.append((entry.path, entry.stat().st_mtime))
 
-            # 按修改时间排序
-            images.sort(key=lambda p: p.stat().st_mtime)
+            self.debug_log(f"清理旧图片: total={len(images_with_mtime)}, max={MAX_CACHED_IMAGES}")
 
-            if len(images) > MAX_CACHED_IMAGES:
-                to_delete = images[: len(images) - MAX_CACHED_IMAGES]
+            # 按修改时间排序（已预先获取 mtime，无需再次调用 stat）
+            images_with_mtime.sort(key=lambda x: x[1])
+
+            if len(images_with_mtime) > MAX_CACHED_IMAGES:
+                to_delete = images_with_mtime[: len(images_with_mtime) - MAX_CACHED_IMAGES]
                 deleted_count = 0
-                for img_path in to_delete:
+                for img_path, _ in to_delete:
                     try:
-                        img_path.unlink()
+                        os.unlink(img_path)
                         deleted_count += 1
                     except OSError as e:
                         # 记录删除失败的文件，可能是已被其他进程删除
                         self.debug_log(f"删除文件失败: {img_path}, 错误: {e}")
-                self.debug_log(f"清理完成: deleted={deleted_count}, kept={len(images) - deleted_count}")
+                self.debug_log(f"清理完成: deleted={deleted_count}, kept={len(images_with_mtime) - deleted_count}")
         except OSError as e:
             logger.warning(f"清理旧图片时出错: {e}")
             self.debug_log(f"清理旧图片失败: {e}")

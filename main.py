@@ -106,6 +106,9 @@ class GiteeAIImage(Star):
             yield event.plain_result("请提供提示词！使用方法：/ai-gitee <提示词> [比例]")
             return
 
+        # 去除首尾空白字符
+        prompt = prompt.strip()
+
         user_id = event.get_sender_id()
         request_id = user_id
 
@@ -129,7 +132,13 @@ class GiteeAIImage(Star):
         prompt_parts = prompt.rsplit(" ", 1)
         if len(prompt_parts) > 1 and prompt_parts[1] in SUPPORTED_RATIOS:
             ratio = prompt_parts[1]
-            prompt = prompt_parts[0]
+            prompt = prompt_parts[0].strip()
+
+        # 分割后再次检查提示词是否为空
+        if not prompt:
+            self.debug_log("[命令] 分割后提示词为空")
+            yield event.plain_result("请提供提示词！使用方法：/ai-gitee <提示词> [比例]")
+            return
 
         self.debug_log(f"[命令] 解析参数: ratio={ratio}, prompt={prompt[:50]}...")
 
@@ -191,12 +200,25 @@ class GiteeAIImage(Star):
 
         self.rate_limiter.add_processing(request_id)
 
+        # 解析比例参数（与命令行指令保持一致）
+        target_size = ""
+        prompt = prompt.strip()
+        prompt_parts = prompt.rsplit(" ", 1)
+        if len(prompt_parts) > 1 and prompt_parts[1] in SUPPORTED_RATIOS:
+            ratio = prompt_parts[1]
+            prompt = prompt_parts[0].strip()
+            # 确定目标尺寸
+            if ratio != "1:1" or (
+                ratio == "1:1" and self.api_client.default_size not in SUPPORTED_RATIOS["1:1"]
+            ):
+                target_size = SUPPORTED_RATIOS[ratio][0]
+
         try:
-            self.debug_log(f"[LLM工具] 开始生成图片: user_id={user_id}")
+            self.debug_log(f"[LLM工具] 开始生成图片: user_id={user_id}, size={target_size or 'default'}")
             # 先发送提示消息
             await event.send(event.plain_result("正在生成图片，请稍候..."))
             start_time = time.time()
-            image_path = await self.api_client.generate_image(prompt)
+            image_path = await self.api_client.generate_image(prompt, size=target_size)
             end_time = time.time()
             elapsed_time = end_time - start_time
             self.debug_log(

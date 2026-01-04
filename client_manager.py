@@ -6,6 +6,7 @@
 from typing import Optional
 
 import aiohttp
+import httpx
 from openai import AsyncOpenAI
 
 from astrbot.api import logger
@@ -25,6 +26,8 @@ class ClientManager:
         self.base_url = base_url
         self._openai_clients: dict[str, AsyncOpenAI] = {}
         self._http_session: Optional[aiohttp.ClientSession] = None
+        # 创建共享的 httpx.AsyncClient，供所有 AsyncOpenAI 实例使用
+        self._httpx_client: Optional[httpx.AsyncClient] = None
         self.debug_log(f"初始化客户端管理器: base_url={base_url}, debug_mode={debug_mode}")
 
     def debug_log(self, message: str) -> None:
@@ -40,6 +43,7 @@ class ClientManager:
         """获取或创建 AsyncOpenAI 客户端
 
         使用 API Key 作为缓存键，如果已存在则复用，否则创建新实例。
+        所有 AsyncOpenAI 实例共享同一个 httpx.AsyncClient 以减少资源占用。
 
         Args:
             api_key: API Key
@@ -53,11 +57,20 @@ class ClientManager:
         if not api_key:
             raise ValueError("API Key 不能为空")
 
+        # 延迟初始化共享的 httpx.AsyncClient
+        if self._httpx_client is None:
+            self.debug_log("创建共享的 httpx.AsyncClient")
+            self._httpx_client = httpx.AsyncClient(
+                limits=httpx.Limits(max_keepalive_connections=10, max_connections=20),
+                timeout=httpx.Timeout(60.0, connect=10.0),
+            )
+
         if api_key not in self._openai_clients:
             self.debug_log(f"创建新的 OpenAI 客户端: api_key={api_key[:10]}...")
             self._openai_clients[api_key] = AsyncOpenAI(
                 base_url=self.base_url,
                 api_key=api_key,
+                http_client=self._httpx_client,  # 使用共享的 httpx.AsyncClient
             )
         else:
             self.debug_log(f"复用 OpenAI 客户端: api_key={api_key[:10]}...")
@@ -82,7 +95,7 @@ class ClientManager:
     async def close(self) -> None:
         """清理所有客户端资源
 
-        关闭 HTTP Session 和所有 OpenAI 客户端连接，释放资源。
+        关闭 HTTP Session、共享的 httpx.AsyncClient 和所有 OpenAI 客户端连接，释放资源。
         应在插件卸载时调用。
         """
         self.debug_log("开始清理客户端资源")
@@ -93,9 +106,13 @@ class ClientManager:
             await self._http_session.close()
             self._http_session = None
 
-        # 清理 OpenAI 客户端
+        # 关闭共享的 httpx.AsyncClient
+        if self._httpx_client is not None:
+            self.debug_log("关闭共享的 httpx.AsyncClient")
+            await self._httpx_client.aclose()
+            self._httpx_client = None
+
+        # 清理 OpenAI 客户端（不需要调用 close，因为它们使用共享的 httpx.AsyncClient）
         client_count = len(self._openai_clients)
-        for client in self._openai_clients.values():
-            await client.close()
         self._openai_clients.clear()
-        self.debug_log(f"已关闭 {client_count} 个 OpenAI 客户端")
+        self.debug_log(f"已清理 {client_count} 个 OpenAI 客户端")
