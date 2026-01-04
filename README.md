@@ -1,4 +1,6 @@
 # AstrBot AI 图像生成插件 （有免费额度）
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxiaomizhoubaobei%2Fastrbot_plugin_models_ai.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxiaomizhoubaobei%2Fastrbot_plugin_models_ai?ref=badge_shield)
+
 
 > **当前版本**: v0.0.1
 
@@ -92,3 +94,6 @@
 <img width="1152" height="2048" alt="60393b1ea20d432822c21a61ba48d946" src="./images/3d8195e5-5d89-4a12-806e-8a81e348a96c.png" />
 
 <img width="1152" height="2048" alt="3e5ee8d438fa797730127e57b9720454_720" src="./images/c270ae7f-25f6-4d96-bbed-0299c9e61877.png" />
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxiaomizhoubaobei%2Fastrbot_plugin_models_ai.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxiaomizhoubaobei%2Fastrbot_plugin_models_ai?ref=badge_large)
